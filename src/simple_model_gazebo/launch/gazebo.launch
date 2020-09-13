@@ -18,7 +18,7 @@
 
    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
-   <node name="cmd_vel_driver" pkg="simple_model_gazebo" type="driver.py" output="screen"/>
+   <node name="controller" pkg="simple_model_gazebo" type="driver.py"/>
    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
 
 </launch>
