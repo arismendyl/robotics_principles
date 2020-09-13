@@ -1,0 +1,8 @@
+prefix=/home/ros-industrial/Documents/Gazebo/robotics/install
+
+Name: simple_model_gazebo
+Description: Description of simple_model_gazebo
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/ros-industrial/Documents/Gazebo/robotics/install/lib 
+Requires: 
