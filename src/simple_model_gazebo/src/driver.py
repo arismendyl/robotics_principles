@@ -7,6 +7,8 @@ from nav_msgs.msg import Odometry
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 import math
 
+idx = 0
+
 def callback(sonar_c, sonar_r, sonar_l, odom):
     l_x = 0.0
     l_y = 0.0
@@ -14,13 +16,16 @@ def callback(sonar_c, sonar_r, sonar_l, odom):
     a_x = 0.0
     a_y = 0.0
     a_z = 0.0
-    if (sonar_c.range<=0.25 or sonar_r.range<=0.25 or sonar_l.range<=0.25):
+    if (sonar_c.range<=0.25 or sonar_r.range<=0.10 or sonar_l.range<=0.10):
         l_x = 0.0
         l_y = 0.0
         l_z = 0.0
         a_x = 0.0
         a_y = 0.0
-        a_z = 1.0    
+        if sonar_r.range<sonar_l.range:
+            a_z = 0.5
+        else: 
+            a_z = -0.5
     else:
         l_x, a_z = controller(odom)
         l_y = 0.0
@@ -32,13 +37,14 @@ def callback(sonar_c, sonar_r, sonar_l, odom):
     publisher(l_x,l_y,l_z,a_x,a_y,a_z)
 
 def controller(odom):
-    x_0 = [-1.0, -1.0, 1.0, 1.0]
-    y_0 = [-1.0, 1.0, -1.0, -1.0]
+    global idx
+    x_0 = [-1.0, -2.0, -3.0, -4.0]
+    y_0 = [0.0, 0.0, 0.0, -1.0]
     theta_0 = 0
     k1 = 0.25
     k2 = 0.9
     k3 = -0.3
-    idx=0
+    #idx=0
     x = x_0[idx] + odom.pose.pose.position.x 
     y = y_0[idx] + odom.pose.pose.position.y
     quaternion = (odom.pose.pose.orientation.x, odom.pose.pose.orientation.y, odom.pose.pose.orientation.z, odom.pose.pose.orientation.w)
