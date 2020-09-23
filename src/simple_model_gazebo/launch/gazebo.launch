@@ -14,11 +14,11 @@
 
   <!-- Spawn robot into Gazebo -->
   <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" output="screen"
-     args="-file $(find simple_model_gazebo)/urdf/simple_model_gazebo.urdf -urdf -model minimal2WD_sonar" />
-
-   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
-   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
-   <node name="controller" pkg="simple_model_gazebo" type="driver.py"/>
-   <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+    args="-file $(find simple_model_gazebo)/urdf/simple_model_gazebo.urdf -urdf -model minimal2WD_sonar" />
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+  <node name="controller" pkg="simple_model_gazebo" type="driver.py"/>
+  <node name="simple_control" pkg="simple_model_gazebo" type="simple_control"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
 
 </launch>
