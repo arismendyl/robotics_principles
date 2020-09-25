@@ -6,6 +6,7 @@ from sensor_msgs.msg import Range
 from nav_msgs.msg import Odometry
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 import math
+import numpy as np
 
 idx = 0
 
@@ -38,7 +39,7 @@ def callback(sonar_c, sonar_r, sonar_l, odom):
 
 def controller(odom):
     global idx
-    x_0 = [-1.0, -2.0, -3.0, -4.0]
+    x_0 = [-1.0, 0.0, -3.0, -4.0]
     y_0 = [0.0, 0.0, 0.0, -1.0]
     theta_0 = 0
     k1 = 0.25
@@ -48,7 +49,7 @@ def controller(odom):
     x = x_0[idx] + odom.pose.pose.position.x 
     y = y_0[idx] + odom.pose.pose.position.y
     quaternion = (odom.pose.pose.orientation.x, odom.pose.pose.orientation.y, odom.pose.pose.orientation.z, odom.pose.pose.orientation.w)
-    theta = euler_from_quaternion(quaternion)[2]
+    theta = euler_from_quaternion(quaternion)[2] + theta_0
     print("Odometry --> x: ",x,"y: ",y, "theta: ", theta)
     ed = math.sqrt((x*x) + (y*y))
     beta = -math.atan2(-y,-x)
@@ -58,7 +59,6 @@ def controller(odom):
     t_dot = k2*alfa + k3*beta
     print("Control --> x_dot: ",x_dot,"theta_dot: ",t_dot)
     if ed < 0.03:
-        
         idx = (idx + 1)%4
     return x_dot, t_dot
 
