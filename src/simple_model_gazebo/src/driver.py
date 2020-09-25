@@ -8,6 +8,8 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 import math
 
 idx = 0
+err_pre = 0
+err_acum = 0
 
 def callback(sonar_c, sonar_r, sonar_l, odom):
     l_x = 0.0
@@ -37,11 +39,13 @@ def callback(sonar_c, sonar_r, sonar_l, odom):
     publisher(l_x,l_y,l_z,a_x,a_y,a_z)
 
 def controller(odom):
-    global idx
-    x_0 = [-1.0, -2.0, -3.0, -4.0]
-    y_0 = [0.0, 0.0, 0.0, -1.0]
+    global idx,err_pre, err_acum
+    x_0 = [-1.0, 0.0]
+    y_0 = [0.0, 0.0]
     theta_0 = 0
-    k1 = 0.25
+    k1p = 0.25
+    k2d = 0.1
+    k1i = 0.5
     k2 = 0.9
     k3 = -0.3
     #idx=0
@@ -54,11 +58,13 @@ def controller(odom):
     beta = -math.atan2(-y,-x)
     alfa = -beta - theta
     print("Error --> rho: ",ed,"alfa: ",alfa, "beta: ", beta)
-    x_dot = k1*ed
-    t_dot = k2*alfa + k3*beta
+    x_dot = k1p*ed  
+    t_dot = k2*alfa + k3*beta + k2d*(alfa - err_pre) + k2i*err_acum
+    err_pre = alfa
+    err_acum = err_acum + alfa
     print("Control --> x_dot: ",x_dot,"theta_dot: ",t_dot)
     if ed < 0.03:
-      idx = (idx + 1)%4
+      idx = (idx + 1)%2
     return x_dot, t_dot
 
 def publisher(l_x,l_y,l_z,a_x,a_y,a_z):
