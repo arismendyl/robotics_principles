@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import rospy
 import message_filters 
 from geometry_msgs.msg import Twist
@@ -42,8 +42,8 @@ def callback(sonar_c, sonar_r, sonar_l, odom):
 
 def controller(odom):
     global idx,err_pre, err_acum, k3
-    x_0 = [4, 0.0]
-    y_0 = [-15.0, 0.0]
+    x_0 = [3.0, 0.0]
+    y_0 = [3.5, 0.0]
     theta_0 = 0
     k1p = 0.25
     k2 = 0.9
@@ -65,7 +65,7 @@ def controller(odom):
     t_dot = k2*alfa + k3*beta 
     print("Control --> x_dot: ",x_dot,"theta_dot: ",t_dot)
     if ed < 0.03:
-        idx = (idx + 1)%3
+        idx = (idx + 1)%2
     return x_dot, t_dot
 
 def publisher(l_x,l_y,l_z,a_x,a_y,a_z):
