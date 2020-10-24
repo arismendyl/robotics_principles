@@ -40,8 +40,8 @@ void createMap(){
 void updateDest(){
     cout << "Enter final node: ";
     cin >> node;
-    int x = node%X_SIZE;
-    int y = (node - x)/X_SIZE;
+    int x = node % X_SIZE;
+    int y = (node - x) / X_SIZE;
     x_dest = grid_x[y];
     y_dest = grid_y[x];
     printf("Destination: x = %g, y = %g\n",x_dest,y_dest);
@@ -98,8 +98,9 @@ ros::NodeHandle nh;
 ros::Publisher pub=nh.advertise<geometry_msgs::Twist>("red_rider/cmd_vel", 10);
 
 //Subscribes to odometry topic
-ros::Subscriber odom_sub = nh.subscribe("red_rider/odom", 10, odomCallback);
 ros::Subscriber dest_v = nh.subscribe("next_position", 10, assignPath);
+ros::Subscriber odom_sub = nh.subscribe("red_rider/odom", 10, odomCallback);
+
 
 //Sets the loop to publish at a rate of 30Hz
 ros::Rate rate(30);

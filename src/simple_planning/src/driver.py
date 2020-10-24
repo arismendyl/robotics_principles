@@ -1,100 +1,95 @@
 #!/usr/bin/env python3
 import rospy
-import message_filters 
 from geometry_msgs.msg import Twist
-from sensor_msgs.msg import Range
 from nav_msgs.msg import Odometry
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 import math
 import numpy as np
+from std_msgs.msg import Int32MultiArray
 
-idx = 0
-err_pre = 0
-err_acum = 0
-k3 = -0.00001
+X_SIZE = 15
+Y_SIZE = 15
+X_0 = -2.25
+Y_0 = 1.95
+GRID_STEP = 0.3
+K1 = 0.7
+K2 = 0.7
+x_dest = 0
+y_dest = 0
+state = 0
+grid_x, grid_y, path = ([], ) * 3
+float ed, w, dx, dy, x_dot, t_dot
 
-def callback(sonar_c, sonar_r, sonar_l, odom):
-    l_x = 0.0
-    l_y = 0.0
-    l_z = 0.0
-    a_x = 0.0
-    a_y = 0.0
-    a_z = 0.0
-    if (sonar_c.range<=0.25 or sonar_r.range<=0.15 or sonar_l.range<=0.15):
-        l_x = 0.0
-        l_y = 0.0
-        l_z = 0.0
-        a_x = 0.0
-        a_y = 0.0
-        if sonar_r.range<sonar_l.range:
-            a_z = 0.8
-        else: 
-            a_z = -0.8
-    else:
-        l_x, a_z = controller(odom)
-        l_y = 0.0
-        l_z = 0.0
-        a_x = 0.0
-        a_y = 0.0
+def createMap():
+    global grid_x, grid_y
+    for i in range(X_SIZE):
+        grid_x.append(X_0 + i*GRID_STEP)
+    for i in range(Y_SIZE):
+        grid_y.append(X_0 - i*GRID_STEP)
 
-    print(sonar_c.range," ",sonar_r.range," ",sonar_l.range)    
-    publisher(l_x,l_y,l_z,a_x,a_y,a_z)
+def updateDest():
+    global x_dest, y_dest
+    node = input('Enter final node: ')
+    x = node % X_SIZE
+    y = (node - x) / X_SIZE
+    x_dest = grid_x[y]
+    y_dest = grid_y[x]
+    print("Destination: x = ", x_dest, " y = ", y_dest)
 
-def controller(odom):
-    global idx,err_pre, err_acum, k3
-    x_0 = [3.0, 0.0]
-    y_0 = [3.5, 0.0]
-    theta_0 = 0
-    k1p = 0.25
-    k2 = 0.9
-    k3 = -0.3
-    x = x_0[idx] + odom.pose.pose.position.x 
-    y = y_0[idx] + odom.pose.pose.position.y
+def assignPath(paths):
+    global path 
+    path = paths
+
+def odomCallback(odom):
+    global dx, dy, ed, w, x_dot, t_dot, state
+
+    dx = x_dest - odom.pose.pose.position.x 
+    dy = y_dest + odom.pose.pose.position.y
+    ed = math.sqrt((dx*dx) + (dy*dy))
     quaternion = (odom.pose.pose.orientation.x, odom.pose.pose.orientation.y, odom.pose.pose.orientation.z, odom.pose.pose.orientation.w)
-    theta = euler_from_quaternion(quaternion)[2] + theta_0
-    print("Odometry --> x: ",x,"y: ",y, "theta: ", theta)
-    ed = math.sqrt((x*x) + (y*y))
-    beta = -math.atan2(-y,-x)
-    alfa = -beta - theta
-    if alfa < -np.pi:
-        alfa = alfa + 2*np.pi
-    elif alfa > np.pi:
-        alfa = alfa - 2*np.pi
-    print("Error --> rho: ",ed,"alfa: ",alfa, "beta: ", beta)
-    x_dot = k1p*ed  
-    t_dot = k2*alfa + k3*beta 
-    print("Control --> x_dot: ",x_dot,"theta_dot: ",t_dot)
-    if ed < 0.03:
-        idx = (idx + 1)%2
-    return x_dot, t_dot
-
-def publisher(l_x,l_y,l_z,a_x,a_y,a_z):
-    pub = rospy.Publisher("/robot/cmd_vel", Twist, queue_size= 10)
-    rate = rospy.Rate(10)
-    vel = Twist()
-    vel.linear.x = l_x
-    vel.linear.y = l_y
-    vel.linear.z = l_z
-    vel.angular.x = a_x
-    vel.angular.y = a_y
-    vel.angular.z = a_z
-    pub.publish(vel)
-    rate.sleep()
-
-def listener():
-    rospy.init_node('controller', anonymous=True)
-    sonar_c = message_filters.Subscriber("/sensor/sonar_scan", Range)
-    sonar_r = message_filters.Subscriber("/sensor/sonar_scan_r", Range)
-    sonar_l = message_filters.Subscriber("/sensor/sonar_scan_l", Range)
-    odom = message_filters.Subscriber("/odom", Odometry)
-    ts = message_filters.ApproximateTimeSynchronizer([sonar_c, sonar_r, sonar_l, odom], 10, 0.1, allow_headerless=True)
-    ts.registerCallback(callback)
-    rospy.spin()    
+    theta = euler_from_quaternion(quaternion)[2]
+    beta = -math.atan2(-dy,-dx)
+    w = -beta - theta
+    if (w > np.pi):
+        w -= 2*np.pi
+    elif (w < -np.pi):
+        w += 2*np.pi
+    
+    if (state == 0):
+        x_dot = 0
+        t_dot = k2*w
+        if (abs(w) < 0.07):
+            state = 1
+    elif (state == 1):
+        if (ed > 0.07):
+            x_dot = k1*ed
+            t_dot = k2*w
+        else:
+            x_dot = 0
+            t_dot = 0
+            state = 2
+    else:
+        x_dot = 0
+        t_dot = 0
+        updateDest()
+        state = 0
+    print("Error --> rho ", ed, ",alfa: ", w)
 
 if __name__ == '__main__':
     try:
-        listener()
+        createMap()
+        updateDest()
+        rospy.init_node('rr_path_exec', anonymous=True)
+        pub = rospy.Publisher("red_rider/cmd_vel", Twist, queue_size= 10)
+        dest_v = rospy.Subscriber("next_position", Int32MultiArray, assignPath)
+        odom_sub = rospy.Subscriber("red_rider/odom", Int32MultiArray, odomCallback)
+        rate = rospy.Rate(30)
+        msg = Twist()
+        while not rospy.is_shutdown():
+            msg.linear.x = x_dot
+            msg.angular.z = t_dot
+            pub.publish(msg)
+            rospy.spin()
+            rate.sleep()
     except rospy.ROSInterruptException:
         pass
-
-    
