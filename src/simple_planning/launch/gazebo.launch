@@ -1,6 +1,6 @@
 <launch>
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name" value="$(find simple_model_gazebo)/worlds/house.world"/>
+    <arg name="world_name" value="$(find simple_model_gazebo)/worlds/test_room.world"/>
     <arg name="paused" default="false"/>
     <arg name="use_sim_time" default="true"/>
     <arg name="gui" default="true"/>
@@ -17,7 +17,7 @@
     args="-file $(find simple_model_gazebo)/urdf/simple_model_gazebo.urdf -urdf -model minimal2WD_sonar" />
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
-  <node name="controller" pkg="simple_model_gazebo" type="driver.py"/>
+  <!--<node name="rr_path_exec" pkg="simple_planning" type="rr_path_exec.cpp"/>-->
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
 
 </launch>
