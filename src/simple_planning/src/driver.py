@@ -14,9 +14,12 @@ Y_0 = 1.95
 GRID_STEP = 0.3
 K1 = 0.7
 K2 = 0.7
+idx = 0
 state = 0
-grid_x, grid_y, path = ([], ) * 3
-x_dest, y_dest, x_dot, t_dot = (0.0, ) * 4
+path = [0]
+grid_x, grid_y = ([], ) * 2
+x_dest, y_dest = -2.2627, 1.9484
+x_dot, t_dot = (0.0, ) * 2
 
 def createMap():
     global grid_x, grid_y 
@@ -27,19 +30,25 @@ def createMap():
         grid_y[i] = Y_0 - i*GRID_STEP
 
 def updateDest():
-    global x_dest, y_dest
-    node = input('Enter final node: ')
-    node = int(node)
+    global x_dest, y_dest, path, idx
+    print(path[idx])
+    node = int(path[idx])
     x = int(node % X_SIZE)
     y = int((node - x) / X_SIZE)
     x_dest = grid_x[y]
     y_dest = grid_y[x]
     print("Destination: x = ", x_dest, " y = ", y_dest)
+    print('idx: ',idx)
+    if (idx<len(path)-1):
+        idx += 1
+    else:
+        pass
 
 def assignPath(paths):
-    global path 
-    path = paths
-    print(path.data)
+    global path, idx
+    idx = 0
+    path = paths.data[1:]
+    updateDest()
 
 def odomCallback(odom):
     global x_dot, t_dot, state
@@ -49,6 +58,7 @@ def odomCallback(odom):
     msg.linear.x = x_dot
     msg.angular.z = t_dot
     pub.publish(msg)
+    print('x: ',odom.pose.pose.position.x, 'y: ',odom.pose.pose.position.y)
     dx = x_dest - odom.pose.pose.position.x 
     dy = y_dest - odom.pose.pose.position.y
     ed = math.sqrt((dx*dx) + (dy*dy))
@@ -84,7 +94,6 @@ if __name__ == '__main__':
     try:
         rospy.init_node('rr_path_exec', anonymous=True)
         createMap()
-        updateDest()
         dest_v = rospy.Subscriber("next_position", Int32MultiArray, assignPath)
         odom_sub = rospy.Subscriber("/red_rider/odom", Odometry, odomCallback)
         rospy.spin()
