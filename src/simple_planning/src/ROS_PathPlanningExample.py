@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import rospy
 import dijkstra as dij
-from std_msgs.msg import Int32
+#from std_msgs.msg import Int32
+from std_msgs.msg import Int32MultiArray
 
 def create_map(x_size, y_size, obs_list):
     grid = dij.Graph()
@@ -30,7 +31,7 @@ def create_map(x_size, y_size, obs_list):
                 grid.add_edge(n1, n2, 1)
     return grid
 
-def pose():
+def pose(xi, yi, xf, yf):
     SIZE_X = 15
     SIZE_Y = 15
     obs =[2,17,32,33,34,38,39,40,42,47,48,49,53,54,55,62,
@@ -40,32 +41,35 @@ def pose():
     graph = create_map(15,15,obs)
 
     print("Type location of starting node")
-    x = int(input("X = "))
-    y = int(input("Y = "))
-    start = SIZE_X*y+x
+    #xi = int(input("X = "))
+    #yi = int(input("Y = "))
+    start = SIZE_X*yi+xi
     paths = dij.DijkstraSPF(graph, start)
-    print("%-5s %-5s" % ("destination", "cost"))
-    for u in range(0,SIZE_X*SIZE_Y):
-        if not u in obs:
-            print("%-5s %8d" % (u, paths.get_distance(u)))
+#    print("%-5s %-5s" % ("destination", "cost"))
+#    for u in range(0,SIZE_X*SIZE_Y):
+#        if not u in obs:
+#            print("%-5s %8d" % (u, paths.get_distance(u)))
 
-    print("Type location of destination node")
-    x = int(input("X = "))
-    y = int(input("Y = "))
-    dest = SIZE_X*y+x
-    if not dest in obs:
-        print(paths.get_path(dest))
-    else:
-        print("Destination cannot be reached.")
+    #print("Type location of destination node")
+    #xf = int(input("X = "))
+    #yf = int(input("Y = "))
+    dest = SIZE_X*yf+xf
+#    if not dest in obs:
+#        print(paths.get_path(dest))
+#    else:
+#        print("Destination cannot be reached.")
 
-    return paths.get_path(dest)[1]
+    return paths.get_path(dest)
 
-def publisher(pose):
+def publisher(xy):
+    print('ok')
     print('publisher')
-    pub = rospy.Publisher("next_position", Int32, queue_size= 10)
+    pub = rospy.Publisher("next_position", Int32MultiArray, queue_size= 10)
     rate = rospy.Rate(10)
-    msg = Int32()
-    msg.data = 5
+    msg = Int32MultiArray()
+    print(xy.data[0])
+    msg.data = pose(xy.data[0], xy.data[1], xy.data[2], xy.data[3])
+    print(msg.data)
     pub.publish(msg)
     rate.sleep()
 
@@ -73,7 +77,7 @@ def publisher(pose):
 def listener():
     print('listener')
     rospy.init_node('dij_position', anonymous=True)
-    rospy.Subscriber("position", Int32, publisher)
+    rospy.Subscriber("position", Int32MultiArray, publisher)
     rospy.spin()
 
 if __name__ == '__main__':

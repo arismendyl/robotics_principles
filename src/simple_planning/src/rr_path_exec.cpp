@@ -2,6 +2,7 @@
 #include <tf/transform_broadcaster.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
+#include <std_msgs/Int32MultiArray.h>
 #include <stdlib.h>
 #include <iostream>
 #include <math.h>
@@ -20,10 +21,12 @@ using namespace std;
 int node;
 double grid_x[X_SIZE];
 double grid_y[Y_SIZE];
+std_msgs::Int32MultiArray path;
 double x_dest = 0;
 double y_dest = 0;
 volatile int state = 0;
 volatile double ed, w, dx, dy, x_dot, t_dot;
+
 
 void createMap(){
     for (int i = 0; i < X_SIZE; i++){
@@ -35,13 +38,17 @@ void createMap(){
 }
 
 void updateDest(){
-    cout << "Enter next node: ";
+    cout << "Enter final node: ";
     cin >> node;
     int x = node%X_SIZE;
     int y = (node - x)/X_SIZE;
     x_dest = grid_x[y];
     y_dest = grid_y[x];
     printf("Destination: x = %g, y = %g\n",x_dest,y_dest);
+}
+
+void assignPath(const std_msgs::Int32MultiArray& paths){
+    path = paths;
 }
 
 void odomCallback(const nav_msgs::Odometry::ConstPtr& msg){
@@ -92,6 +99,7 @@ ros::Publisher pub=nh.advertise<geometry_msgs::Twist>("red_rider/cmd_vel", 10);
 
 //Subscribes to odometry topic
 ros::Subscriber odom_sub = nh.subscribe("red_rider/odom", 10, odomCallback);
+ros::Subscriber dest_v = nh.subscribe("next_position", 10, assignPath);
 
 //Sets the loop to publish at a rate of 30Hz
 ros::Rate rate(30);
