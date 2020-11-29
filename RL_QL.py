@@ -10,19 +10,19 @@ style.use("ggplot")  # setting our style!
 
 
 SIZE = 15
-HM_EPISODES = 1000
+HM_EPISODES = 5000
 MOVE_PENALTY = 10  # feel free to tinker with these!
 ENEMY_PENALTY = 300  # feel free to tinker with these!
-FOOD_REWARD = 2500  # feel free to tinker with these!
-MAX_STEPS = 2000
-epsilon = 0.2  # randomness
-EPS_DECAY = 0.9999  # Every episode will be epsilon*EPS_DECAY
-SHOW_EVERY = 10 # how often to play through env visually.
+FOOD_REWARD = 250  # feel free to tinker with these!
+MAX_STEPS = 200
+epsilon = 0.5  # randomness
+EPS_DECAY = 0.9998  # Every episode will be epsilon*EPS_DECAY
+SHOW_EVERY = 500 # how often to play through env visually.
 
 start_q_table = None  # if we have a pickled Q table, we'll put the filename of it here.
 
-LEARNING_RATE = 0.1
-DISCOUNT = 0.95
+LEARNING_RATE = 0.3
+DISCOUNT = 0.9
 
 PLAYER_N = 1  # player key in dict
 FOOD_N = 2  # food key in dict
@@ -62,28 +62,22 @@ class Blob():
         '''
         Gives us 4 total movement options. (0,1,2,3)
         '''
-        if choice == 0:
+        if choice == 0: # Up 
             self.move(x=0, y=1)
-        elif choice == 1:
+        elif choice == 1: # Down
             self.move(x=0, y=-1)
-        elif choice == 2:
+        elif choice == 2: # Left
             self.move(x=-1, y=0)
-        elif choice == 3:
+        elif choice == 3: # Right
             self.move(x=1, y=0)
     def move(self, x=False, y=False):
       bx=self.x 
       by=self.y  
       # If no value for x, move randomly
-      if not x:
-          self.x += np.random.randint(-1, 2)
-      else:
-          self.x += x
+      self.x += x
 
       # If no value for y, move randomly
-      if not y:
-          self.y += np.random.randint(-1, 2)
-      else:
-          self.y += y
+      self.y += y
 
 
       # If we are out of bounds, fix!
@@ -102,29 +96,27 @@ class Blob():
           self.x = bx
           self.y = by
 
-player = Blob(0,0)
-food = Blob(7,4)
+# player = Blob(0,0)
+# food = Blob(9,4)
+# print(player)
+# print(food)
+# print(player-food)
+# player.move()
+# print(player-food)
+# player.action(2)
+# print(player-food)
 
 enemies = []
 
 for i in range(len(obst_car)):
     enemies.append(Blob(obst_car[i][0],obst_car[i][1]))
 
-
-print(player)
-print(food)
-print(player-food)
-player.move()
-print(player-food)
-player.action(2)
-print(player-food)
-
 if start_q_table is None:
     # initialize the q-table#
     q_table = {}
     for i in range(-SIZE+1, SIZE):
         for ii in range(-SIZE+1, SIZE):
-                        q_table[((i, ii))] = [np.random.uniform(-5, 0) for i in range(4)]
+                        q_table[((i, ii))] = [np.random.uniform(0, 0) for i in range(4)]
 else:
     with open(start_q_table, "rb") as f:
         q_table = pickle.load(f)
@@ -133,8 +125,8 @@ episode_rewards = []
 wins = 0
 
 for episode in range(HM_EPISODES):
-    player = Blob(0,0)
-    food = Blob(7,4)
+    player = Blob(5,0)
+    food = Blob(5,6)
     if episode % SHOW_EVERY == 0:
         print(f"on #{episode}, epsilon is {epsilon}")
         print(f"{SHOW_EVERY} ep mean: {np.mean(episode_rewards[-SHOW_EVERY:])}")
@@ -148,15 +140,17 @@ for episode in range(HM_EPISODES):
         if np.random.random() > epsilon:
             # GET THE ACTION
             action = np.argmax(q_table[obs])
+            # print('Player: ', player.x, player.y ,'QL ')
         else:
             action = np.random.randint(0, 4)
+            # print('Player: ', player.x, player.y ,'Random ')
         # Take the action!
         player.action(action)
 
         if player.x == food.x and player.y == food.y:
             reward = FOOD_REWARD
         else:
-            reward = -MOVE_PENALTY - np.sqrt(obs[0]**2+obs[1]**2)**2
+            reward = -MOVE_PENALTY - 0.5*(np.abs(obs[0]) + np.abs(obs[1]))
         new_obs = (player-food)  # new observation
         max_future_q = np.max(q_table[new_obs])  # max Q value for this new obs
         current_q = q_table[obs][action]  # current Q for our chosen action
@@ -181,6 +175,7 @@ for episode in range(HM_EPISODES):
                     break
 
         episode_reward += reward
+        # print ('Action: ', action, reward)
         if reward == FOOD_REWARD:
             break
     if reward == FOOD_REWARD:
