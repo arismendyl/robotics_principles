@@ -10,16 +10,16 @@ style.use("ggplot")  # setting our style!
 
 
 SIZE = 15
-HM_EPISODES = 5000
+HM_EPISODES = 75000
 MOVE_PENALTY = 10  # feel free to tinker with these!
 ENEMY_PENALTY = 300  # feel free to tinker with these!
 FOOD_REWARD = 250  # feel free to tinker with these!
-MAX_STEPS = 200
+MAX_STEPS = 1000
 epsilon = 0.5  # randomness
 EPS_DECAY = 0.9998  # Every episode will be epsilon*EPS_DECAY
-SHOW_EVERY = 500 # how often to play through env visually.
+SHOW_EVERY = 10000 # how often to play through env visually.
 
-start_q_table = None  # if we have a pickled Q table, we'll put the filename of it here.
+start_q_table = 'qtable.pickle'  # if we have a pickled Q table, we'll put the filename of it here.
 
 LEARNING_RATE = 0.3
 DISCOUNT = 0.9
@@ -114,8 +114,8 @@ for i in range(len(obst_car)):
 if start_q_table is None:
     # initialize the q-table#
     q_table = {}
-    for i in range(-SIZE+1, SIZE):
-        for ii in range(-SIZE+1, SIZE):
+    for i in range(0, SIZE):
+        for ii in range(0, SIZE):
                         q_table[((i, ii))] = [np.random.uniform(0, 0) for i in range(4)]
 else:
     with open(start_q_table, "rb") as f:
@@ -125,8 +125,8 @@ episode_rewards = []
 wins = 0
 
 for episode in range(HM_EPISODES):
-    player = Blob(5,0)
-    food = Blob(5,6)
+    player = Blob(6,0)
+    food = Blob(2,9)
     if episode % SHOW_EVERY == 0:
         print(f"on #{episode}, epsilon is {epsilon}")
         print(f"{SHOW_EVERY} ep mean: {np.mean(episode_rewards[-SHOW_EVERY:])}")
@@ -135,8 +135,9 @@ for episode in range(HM_EPISODES):
         show = False
     episode_reward = 0
     for i in range(MAX_STEPS):
-        obs = (player-food)
-        #print(obs)
+        obsf = (player-food)
+        obs = (player.x, player.y)
+        # print(player)
         if np.random.random() > epsilon:
             # GET THE ACTION
             action = np.argmax(q_table[obs])
@@ -150,8 +151,9 @@ for episode in range(HM_EPISODES):
         if player.x == food.x and player.y == food.y:
             reward = FOOD_REWARD
         else:
-            reward = -MOVE_PENALTY - 0.5*(np.abs(obs[0]) + np.abs(obs[1]))
-        new_obs = (player-food)  # new observation
+            reward = -MOVE_PENALTY - 0.5*(np.abs(obsf[0]) + np.abs(obsf[1]))
+        new_obsf = (player-food)  # new observation
+        new_obs = (player.x, player.y)  # new observation
         max_future_q = np.max(q_table[new_obs])  # max Q value for this new obs
         current_q = q_table[obs][action]  # current Q for our chosen action
         if reward == FOOD_REWARD:
