@@ -17,7 +17,7 @@ FOOD_REWARD = 250  # feel free to tinker with these!
 MAX_STEPS = 1000
 epsilon = 0.5  # randomness
 EPS_DECAY = 0.9998  # Every episode will be epsilon*EPS_DECAY
-SHOW_EVERY = 10000 # how often to play through env visually.
+SHOW_EVERY = 100 # how often to play through env visually.
 
 start_q_table = 'qtable.pickle'  # if we have a pickled Q table, we'll put the filename of it here.
 
@@ -125,8 +125,11 @@ episode_rewards = []
 wins = 0
 
 for episode in range(HM_EPISODES):
+    print(episode)
     player = Blob(6,0)
     food = Blob(2,9)
+    print(player)
+    print(food)
     if episode % SHOW_EVERY == 0:
         print(f"on #{episode}, epsilon is {epsilon}")
         print(f"{SHOW_EVERY} ep mean: {np.mean(episode_rewards[-SHOW_EVERY:])}")
